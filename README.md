@@ -1,12 +1,12 @@
-# [Project Name] 🎯
+# [100 CLICKs] 🎯
 
 
 ## Basic Details
-### Team Name: [Name]
+### Team Name: [Hakunamatata]
 
 
 ### Team Members
-- Team Lead: [Name] - [College]
+- Team Lead: [AYSHA ZUHA CK] - [SULLAMUSALAM SCIENCE COLLEGE AREEKODE]
 - Member 2: [Name] - [College]
 - Member 3: [Name] - [College]
 
