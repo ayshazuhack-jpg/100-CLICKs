@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Click 100 Times to Win (Good luck)</title>
+<style>
+  :root{
+    --bg: #0f1724;
+    --card: #0b1220;
+    --accent: #ffd166;
+    --muted: #9aa4b2;
+    --taunt: #ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: radial-gradient(1200px 600px at 10% 10%, rgba(255,209,102,0.05), transparent 10%),
+                linear-gradient(180deg,#081226 0%, #071121 100%);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    color:#e6eef8;
+    padding:24px;
+  }
+
+  .stage{
+    width:100%;
+    max-width:920px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:14px;
+    padding:28px;
+    box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+    position:relative;
+    overflow:hidden;
+  }
+
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:18px;
+  }
+  h1{
+    font-size:20px;
+    margin:0;
+    letter-spacing:0.4px;
+  }
+  .subtitle{color:var(--muted); font-size:13px}
+
+  .info{
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  .pill{
+    background:rgba(255,255,255,0.03);
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  .arena{
+    height:420px;
+    border-radius:10px;
+    margin-top:12px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+    position:relative;
+    overflow:hidden;
+    border:1px dashed rgba(255,255,255,0.03);
+  }
+
+  #annoyingBtn{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    padding:18px 28px;
+    font-size:18px;
+    background:linear-gradient(180deg,#ffd166,#ffb347);
+    color:#06122a;
+    border:none;
+    border-radius:12px;
+    cursor:pointer;
+    box-shadow: 0 10px 30px rgba(255,177,66,0.12);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+    user-select:none;
+    touch-action:manipulation;
+  }
+  #annoyingBtn:active{ transform: translate(-50%,-50%) scale(0.96); }
+
+  .hud{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-top:14px;
+  }
+
+  .progressWrap{
+    flex:1;
+    background: rgba(255,255,255,0.03);
+    height:14px;
+    border-radius:999px;
+    overflow:hidden;
+  }
+  .progress{
+    height:100%;
+    width:0%;
+    background: linear-gradient(90deg,#ffd166,#ff6b6b);
+    transition: width 180ms linear;
+  }
+
+  .counter{
+    min-width:150px;
+    text-align:right;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .taunt{
+    position:absolute;
+    left:50%;
+    top:12px;
+    transform:translateX(-50%);
+    background:rgba(0,0,0,0.4);
+    padding:8px 14px;
+    border-radius:999px;
+    color:var(--taunt);
+    font-weight:600;
+    font-size:13px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.6);
+    pointer-events:none;
+    opacity:0;
+    transition: transform 350ms ease, opacity 350ms ease;
+  }
+  .taunt.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* winning modal */
+  .modal{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: linear-gradient(180deg, rgba(2,6,23,0.65), rgba(2,6,23,0.85));
+    z-index:50;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 300ms ease;
+  }
+  .modal.show{ opacity:1; pointer-events:auto; }
+  .card{
+    background:linear-gradient(180deg,#0b1220,#071021);
+    border-radius:12px;
+    padding:28px;
+    width:min(86%,560px);
+    text-align:center;
+    box-shadow:0 20px 60px rgba(2,6,23,0.7);
+  }
+  .big{
+    font-size:22px;
+    margin:8px 0 18px;
+  }
+  .tiny{ color:var(--muted); font-size:14px; margin-bottom:18px;}
+  .finalBtn{
+    background:#ffd166;
+    color:#06122a;
+    padding:10px 18px;
+    border-radius:8px;
+    border:none;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  /* confetti/emojis */
+  .confetti{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+  }
+  .emoji{
+    position:absolute;
+    font-size:22px;
+    will-change: transform, opacity;
+    animation: floatUp 2200ms linear forwards;
+  }
+  @keyframes floatUp{
+    0%{ transform: translateY(0) rotate(0deg); opacity:1; }
+    100%{ transform: translateY(-140px) rotate(360deg); opacity:0; }
+  }
+
+  /* responsive tweaks */
+  @media (max-width:520px){
+    .arena{ height:340px; }
+    #annoyingBtn{ padding:14px 20px; font-size:16px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" role="application" aria-label="Click 100 times game">
+    <header>
+      <div>
+        <h1>Click 100 Times to Win</h1>
+        <div class="subtitle">A test of patience, persistence, and mild regret.</div>
+      </div>
+      <div class="info">
+        <div class="pill">Target: <strong>100</strong></div>
+        <div class="pill">Patience: <strong>Optional</strong></div>
+      </div>
+    </header>
+
+    <div class="arena" id="arena" tabindex="0">
+      <div class="taunt" id="taunt">You can do it... maybe?</div>
+
+      <button id="annoyingBtn" aria-label="Click me">Click me 😜</button>
+
+      <div class="modal" id="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="card">
+          <div class="big" id="finalTitle">You did it!</div>
+          <div class="tiny" id="finalText">After 100 glorious clicks, here's your reward...</div>
+          <button class="finalBtn" id="finalBtn">Open reward</button>
+        </div>
+      </div>
+
+      <div class="confetti" id="confetti"></div>
+    </div>
+
+    <div class="hud">
+      <div class="progressWrap" aria-hidden="true">
+        <div class="progress" id="progress"></div>
+      </div>
+      <div class="counter" id="counter">0 / 100</div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const TARGET = 100;
+  const btn = document.getElementById('annoyingBtn');
+  const arena = document.getElementById('arena');
+  const progress = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+  const taunt = document.getElementById('taunt');
+  const modal = document.getElementById('modal');
+  const finalBtn = document.getElementById('finalBtn');
+  const confetti = document.getElementById('confetti');
+
+  let count = 0;
+  let lastMove = 0;
+  let tauntTimer = null;
+
+  // Put button in the center on load
+  function centerButton(){
+    const r = arena.getBoundingClientRect();
+    btn.style.left = (r.width / 2 - btn.offsetWidth / 2) + 'px';
+    btn.style.top = (r.height / 2 - btn.offsetHeight / 2) + 'px';
+    btn.style.transform = 'translate(0,0)';
+  }
+  // ensure initial placement after fonts and layout
+  window.addEventListener('load', centerButton);
+  window.addEventListener('resize', centerButton);
+
+  // update HUD
+  function updateHUD(){
+    counter.textContent = `${count} / ${TARGET}`;
+    const pct = Math.min(100, (count / TARGET) * 100);
+    progress.style.width = pct + '%';
+  }
+
+  // show temporary taunt
+  function shout(text, tone='neutral'){
+    taunt.textContent = text;
+    taunt.classList.add('show');
+    clearTimeout(tauntTimer);
+    tauntTimer = setTimeout(()=> taunt.classList.remove('show'), 2200);
+  }
+
+  // move button to random location inside arena
+  function moveButtonRandomly(fast=false){
+    const r = arena.getBoundingClientRect();
+    const maxX = Math.max(0, r.width - btn.offsetWidth);
+    const maxY = Math.max(0, r.height - btn.offsetHeight);
+    // Prefer positions away from the last click location to feel more lively
+    const now = Date.now();
+    let nx, ny;
+    // Bias away from center sometimes
+    if(Math.random() < 0.2){
+      nx = Math.random() * maxX;
+      ny = Math.random() * maxY;
+    } else {
+      // calculate mouse-avoid or random
+      nx = Math.random() * maxX;
+      ny = Math.random() * maxY;
+    }
+    // small animation via transform
+    btn.style.transition = `left ${fast?120:200}ms ease, top ${fast?120:200}ms ease, transform ${fast?120:200}ms ease`;
+    btn.style.left = nx + 'px';
+    btn.style.top = ny + 'px';
+  }
+
+  // shrink button slightly as user progresses
+  function scaleButtonByProgress(){
+    // start shrinking after 200 clicks, maximum shrink at 1000 clicks
+    const shrinkStart = 200;
+    const shrinkEnd = TARGET;
+    const progressShrink = Math.max(0, Math.min(1, (count - shrinkStart) / (shrinkEnd - shrinkStart)));
+    const scale = 1 - (0.6 * progressShrink); // down to 40% size
+    btn.style.transform = `translate(0,0) scale(${scale})`;
+    btn.style.boxShadow = `0 ${10 * scale}px ${30 * scale}px rgba(255,177,66,${0.12 * scale})`;
+  }
+
+  // tiny random setback to annoy players
+  function maybeSetback(){
+    // small chance of rollback increases with progress
+    const base = 0.006; // 0.6% base
+    const extra = Math.min(0.03, count / 5000); // up to +3%
+    if(Math.random() < base + extra && count > 10 && count < TARGET){
+      // rollback 3-8% of current progress
+      const rollbackPct = 0.03 + Math.random() * 0.05;
+      const newCount = Math.max(0, Math.floor(count * (1 - rollbackPct)));
+      const lost = count - newCount;
+      count = newCount;
+      updateHUD();
+      scaleButtonByProgress();
+      shout(`Uh-oh — rollback! You lost ${lost} clicks...`);
+      // quick teleport to dramatize
+      moveButtonRandomly(true);
+      spawnEmoji('💥');
+    }
+  }
+
+  // spawn a floating emoji for visual flair
+  function spawnEmoji(emoji){
+    const el = document.createElement('div');
+    el.className = 'emoji';
+    el.textContent = emoji;
+    // random start within arena
+    const r = arena.getBoundingClientRect();
+    const x = Math.random() * (r.width - 30);
+    const y = r.height - 30;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    confetti.appendChild(el);
+    // remove after animation
+    setTimeout(()=> el.remove(), 2300);
+  }
+
+  // click handler
+  btn.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    count += 1;
+    updateHUD();
+    scaleButtonByProgress();
+
+    // Celebrate small milestones
+    if(count % 100 === 0 && count < TARGET){
+      shout(`${count} clicks! You're a champ (or a masochist).`);
+      spawnEmoji('👏');
+    }
+
+    // move button every click, sometimes faster
+    const fast = Math.random() < 0.25 || count > 800;
+    moveButtonRandomly(fast);
+
+    // maybe cause a setback
+    maybeSetback();
+
+    // tiny random taunts
+    if(Math.random() < 0.08){
+      const taunts = [
+        "Slow and steady... maybe too steady.",
+        "Is this what you want from life?",
+        "Keep clicking. I'm watching.",
+        "You realise you could be doing literally anything else.",
+        "The button enjoys attention."
+      ];
+      shout(taunts[Math.floor(Math.random()*taunts.length)]);
+    }
+
+    // final check
+    if(count >= TARGET){
+      // Clamp and show modal
+      count = TARGET;
+      updateHUD();
+      scaleButtonByProgress();
+      setTimeout(() => showWinModal(), 300);
+    }
+  });
+
+  // also allow keyboard fans to press space when focused on arena
+  arena.addEventListener('keydown', (e) => {
+    if(e.code === 'Space' || e.key === ' '){
+      e.preventDefault();
+      // simulate click
+      btn.click();
+    }
+  });
+
+  // if the user tries to chase the button with their mouse, it flees
+  arena.addEventListener('mousemove', (e) => {
+    // occasionally dart away when the cursor is very near the button
+    const rect = btn.getBoundingClientRect();
+    const bx = rect.left + rect.width / 2;
+    const by = rect.top + rect.height / 2;
+    const dx = e.clientX - bx;
+    const dy = e.clientY - by;
+    const dist = Math.hypot(dx,dy);
+    if(dist < Math.max(rect.width, rect.height) * 0.9 && Math.random() < 0.18){
+      moveButtonRandomly(true);
+    }
+  });
+
+  // show winning modal
+  function showWinModal(){
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden','false');
+    document.getElementById('finalTitle').textContent = 'You clicked 1,000 times!';
+    document.getElementById('finalText').textContent = "After a heroic display of commitment, here's your reward...";
+    spawnEmoji('🎉'); spawnEmoji('🎊'); spawnEmoji('🍌');
+  }
+
+  finalBtn.addEventListener('click', () => {
+    // the big joke/reward - ridiculous message and some confetti
+    document.getElementById('finalTitle').textContent = "Congrats — you unlocked...";
+    document.getElementById('finalText').textContent = "…a single potato emoji. Truly legendary.";
+    finalBtn.textContent = "Take my potato 🥔";
+    spawnEmoji('🥔'); spawnEmoji('🥔'); spawnEmoji('🥔');
+
+    // after a beat, close modal and replace button with a sleepy button
+    setTimeout(() => {
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden','true');
+      btn.textContent = 'I give up 😴';
+      btn.disabled = true;
+      btn.style.opacity = 0.9;
+      // tiny final taunt
+      shout("You did it... now rest.", 'gentle');
+    }, 1200);
+  });
+
+  // initial HUD
+  updateHUD();
+
+  // center button for the first time (in case fonts/layout didn't finish)
+  setTimeout(centerButton, 80);
+})();
+</script>
+</body>
+</html>
